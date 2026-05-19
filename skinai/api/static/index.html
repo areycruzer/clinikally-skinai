@@ -322,7 +322,7 @@
 
     // Detect if we should rewrite URLs to a remote production backend
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '0.0.0.0';
-    const remoteBackendHost = localStorage.getItem('clinikally_backend_host') || 'clinikally-backend.koyeb.app';
+    const remoteBackendHost = localStorage.getItem('clinikally_backend_host') || '65.20.71.161.nip.io';
 
     window.WebSocket = function(url, protocols) {
       if (!isLocal) {
