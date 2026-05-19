@@ -320,7 +320,21 @@
     const _convIdMap = {};   // backend conversation_id → React conversation_id
     const _userIdMap = {};   // backend user_id → React user_id
 
+    // Detect if we should rewrite URLs to a remote production backend
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '0.0.0.0';
+    const remoteBackendHost = localStorage.getItem('clinikally_backend_host') || 'clinikally-backend.koyeb.app';
+
     window.WebSocket = function(url, protocols) {
+      if (!isLocal) {
+        try {
+          const urlObj = new URL(url);
+          urlObj.protocol = urlObj.protocol === 'wss:' || urlObj.protocol === 'https:' ? 'wss:' : 'ws:';
+          urlObj.host = remoteBackendHost;
+          url = urlObj.toString();
+        } catch (e) {
+          console.error('[SkinAI Interceptor] WebSocket URL rewrite failed:', e);
+        }
+      }
       console.log('[SkinAI Interceptor] 🔌 WebSocket created for:', url);
       const ws = new OriginalWebSocket(url, protocols);
       const originalSend = ws.send;
@@ -529,7 +543,14 @@
           }
           
           urlObj.pathname = pathname;
-          resource = resource.startsWith('/') ? urlObj.pathname + urlObj.search + urlObj.hash : urlObj.toString();
+          
+          if (!isLocal) {
+            urlObj.protocol = 'https:';
+            urlObj.host = remoteBackendHost;
+            resource = urlObj.toString();
+          } else {
+            resource = resource.startsWith('/') ? urlObj.pathname + urlObj.search + urlObj.hash : urlObj.toString();
+          }
         } catch(e) {
           console.error('[SkinAI Interceptor] Fetch rewrite failed:', e);
         }
@@ -543,7 +564,8 @@
       btn.innerHTML = value === 1 ? '✅' : '❌';
       btn.disabled = true;
       try {
-        await originalFetch('http://localhost:8000/feedback/add', {
+        const feedbackUrl = isLocal ? 'http://localhost:8000/feedback/add' : `https://${remoteBackendHost}/feedback/add`;
+        await originalFetch(feedbackUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
