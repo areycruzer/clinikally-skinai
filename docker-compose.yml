@@ -1,6 +1,29 @@
 version: '3.8'
 
 services:
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.24.1
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --scheme
+      - http
+    restart: always
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:50051:50051"
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'text2vec-google'
+      ENABLE_MODULES: 'text2vec-google'
+      CLUSTER_HOSTNAME: 'node1'
+
   backend:
     build: .
     ports:
@@ -17,6 +40,8 @@ services:
       - WEAVIATE_IS_LOCAL=${WEAVIATE_IS_LOCAL}
       - FIRST_START_ELYSIA=${FIRST_START_ELYSIA}
     restart: always
+    depends_on:
+      - weaviate
 
   caddy:
     image: caddy:2-alpine
@@ -34,3 +59,4 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  weaviate_data:
