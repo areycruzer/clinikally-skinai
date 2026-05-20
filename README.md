@@ -1,4 +1,4 @@
-<![CDATA[<p align="center">
+<p align="center">
   <h1 align="center">🧴 Clinikally SkinAI — Agentic Skincare Assistant</h1>
   <p align="center"><i>An intelligent, full-stack AI skincare assistant with decision-tree routing, multi-source RAG, real-time streaming, and multimodal skin photo analysis.</i></p>
 </p>
@@ -90,7 +90,7 @@ The system handles:
 | **Decision-tree agent** over flat tool-list | Enables multi-step reasoning with context awareness; the agent evaluates past actions, available tools, and future strategy before routing |
 | **DSPy for LLM orchestration** | Structured, typed prompting with automatic optimization; no brittle prompt templates |
 | **WebSocket streaming** | Real-time token-by-token delivery for natural chat UX; lower perceived latency |
-| **Weaviate Cloud** | Managed vector DB with hybrid search (dense + BM25); no infrastructure overhead |
+| **Weaviate (Self-hosted)** | Vector DB with hybrid search (dense + BM25); deployed locally on VPS for zero-downtime |
 | **Multi-model fallback** | 5-model retry chain (Gemini → OpenRouter) prevents single-point-of-failure for vision |
 | **Force-routing for images** | Bypasses routing LLM ambiguity when a skin photo is attached |
 
@@ -121,7 +121,7 @@ The system handles:
 - ✅ **Conversation persistence** — localStorage-based session persistence across page refreshes
 - ✅ **User feedback** — 👍/👎 buttons on every response, stored via `/feedback/add` endpoint
 - ✅ **Scalability documentation** — Comprehensive [SCALABILITY.md](SCALABILITY.md) covering horizontal scaling, caching, and cost optimization
-- ✅ **Image upload + skin analysis** — Kawaii camera icon, drag-and-drop, Gemini Vision analysis with clinical diagnostic reports
+- ✅ **Image upload + skin analysis** — Camera icon, drag-and-drop, Gemini Vision analysis with clinical diagnostic reports
 
 ---
 
@@ -131,27 +131,29 @@ The system handles:
 |-------|------------|
 | **LLM** | Google Gemini 2.5 Flash (via litellm) |
 | **LLM Orchestration** | DSPy (structured prompting + chain-of-thought) |
-| **Vector Database** | Weaviate Cloud (hybrid search: dense + BM25) |
+| **Vector Database** | Weaviate (self-hosted, hybrid search: dense + BM25) |
+| **Embeddings** | Google Gemini Embedding 001 (via Weaviate text2vec-google) |
 | **Backend** | FastAPI + Uvicorn (WebSocket + REST) |
 | **Frontend** | Next.js SPA (React, served as static bundle) |
 | **Vision** | Gemini 2.5 Flash / 2.0 Flash multimodal (with OpenRouter fallback) |
 | **API Routing** | OpenRouter (multi-model access + free tier fallback) |
+| **Deployment** | Docker Compose + Caddy (auto-SSL) on Vultr VPS |
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.12
-- A Weaviate Cloud account (or local Weaviate instance)
+- Python 3.12+
+- Docker & Docker Compose
 - API keys: `GEMINI_API_KEY`, `OPENROUTER_API_KEY`
 
 ### Installation
 
 ```bash
 # 1. Clone the repository
-git clone <repo-url>
-cd skinai
+git clone https://github.com/areycruzer/clinikally-skinai.git
+cd clinikally-skinai
 
 # 2. Create virtual environment
 python3.12 -m venv .venv
@@ -162,29 +164,33 @@ pip install -e .
 
 # 4. Configure environment variables
 cp .env.example .env
-# Edit .env with your API keys and Weaviate credentials
+# Edit .env with your API keys
 ```
 
 ### Environment Variables
 
 ```env
-# Weaviate Cloud
-WCD_URL=https://your-cluster.weaviate.cloud
-WCD_API_KEY=your-weaviate-api-key
+# Weaviate (local via Docker Compose)
+WCD_URL=http://weaviate:8080
+WCD_API_KEY=
+WEAVIATE_IS_LOCAL=True
 
 # LLM Models (via OpenRouter)
 BASE_MODEL=openai/gpt-oss-120b:free
 COMPLEX_MODEL=openai/gpt-oss-120b:free
 OPENROUTER_API_KEY=sk-or-v1-...
 
-# Gemini (for vision analysis)
+# Gemini (for vision analysis + embeddings)
 GEMINI_API_KEY=AIza...
 ```
 
-### Run
+### Run Locally
 
 ```bash
-# Start the server
+# Start with Docker Compose (includes Weaviate + backend + Caddy)
+docker compose up -d --build
+
+# Or run standalone (requires separate Weaviate instance)
 skinai start --port 8000
 
 # Open in browser
@@ -214,6 +220,11 @@ skinai/
 │   ├── preprocessing/          # Collection preprocessing + prompt templates
 │   ├── tools/                  # Built-in retrieval tools (query, aggregate)
 │   └── util/                   # Chain-of-thought, client manager, utilities
+├── ingest_data.py              # Data ingestion script (rate-limit aware)
+├── setup_collections.py        # DSPy preprocessing for collections
+├── docker-compose.yml          # Full stack: Weaviate + Backend + Caddy
+├── Dockerfile                  # Backend container build
+├── Caddyfile                   # Reverse proxy with auto-SSL
 ├── test_bonus_features.py      # Automated regression test suite
 ├── API.md                      # API endpoint documentation
 ├── SCALABILITY.md              # Scalability architecture documentation
@@ -271,7 +282,7 @@ Full documentation in [API.md](API.md). Key endpoints:
 | Conversation persistence | ✅ | localStorage + Weaviate tree storage; survives page refresh |
 | User feedback | ✅ | 👍/👎 buttons on every response → POST `/feedback/add` |
 | Scalability docs | ✅ | Comprehensive [SCALABILITY.md](SCALABILITY.md) with horizontal scaling, caching, cost optimization |
-| Image upload + analysis | ✅ | Kawaii camera icon, drag-and-drop upload, Gemini Vision clinical diagnostic, 5-model fallback chain |
+| Image upload + analysis | ✅ | Camera icon, drag-and-drop upload, Gemini Vision clinical diagnostic, 5-model fallback chain |
 
 ---
 
@@ -283,7 +294,7 @@ Full documentation in [API.md](API.md). Key endpoints:
 | **Response quality** | Responses grounded in Weaviate data with source attribution; clinical dermatology expertise; ₹ pricing; ingredient-specific advice |
 | **Full-stack execution** | Premium skincare-themed chat UI, real-time streaming, product cards, responsive design, drag-and-drop image upload |
 | **Code clarity** | Clean package structure, comprehensive docstrings, type hints, clear separation of concerns |
-| **Documentation & deployment** | README, API.md, SCALABILITY.md, .env.example, automated test suite |
+| **Documentation & deployment** | README, API.md, SCALABILITY.md, .env.example, Docker Compose, automated test suite |
 | **Demo quality** | Screen recording walkthrough covering architecture, all 3 query types, image analysis, and design decisions |
 
 ---
@@ -293,7 +304,7 @@ Full documentation in [API.md](API.md). Key endpoints:
 See [SCALABILITY.md](SCALABILITY.md) for the full scalability architecture document. Key strategies:
 
 - **Horizontal scaling** — Stateless FastAPI backend behind load balancer with multiple Uvicorn workers
-- **Database scaling** — Weaviate Cloud auto-sharding with Redis caching layer
+- **Database scaling** — Weaviate auto-sharding with Redis caching layer
 - **LLM scaling** — Multi-model fallback chain, rate-limit handling, cost-tier routing
 - **Graceful degradation** — Always returns a response, even if all data sources fail
 
@@ -317,4 +328,3 @@ MIT License — see [LICENSE](LICENSE) for details.
 <p align="center">
   <i>Built with 🧴 for the Clinikally Agentic Skincare AI Internship Assignment</i>
 </p>
-]]>
