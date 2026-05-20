@@ -45,7 +45,7 @@ with cm.connect_to_client() as client:
             wvc.config.Property(name="image_src", data_type=wvc.config.DataType.TEXT),
             wvc.config.Property(name="price", data_type=wvc.config.DataType.NUMBER),
         ],
-        vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_google(project_id="studio"),
+        vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_google_gemini(model="text-embedding-004"),
     )
     print(f"✅ Collection '{product_collection_name}' created.")
 
@@ -70,7 +70,7 @@ with cm.connect_to_client() as client:
             wvc.config.Property(name="link", data_type=wvc.config.DataType.TEXT),
             wvc.config.Property(name="content", data_type=wvc.config.DataType.TEXT),
         ],
-        vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_google(project_id="studio"),
+        vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_google_gemini(model="text-embedding-004"),
     )
     print(f"✅ Collection '{blog_collection_name}' created.")
 
