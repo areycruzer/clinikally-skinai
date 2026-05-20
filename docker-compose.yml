@@ -23,6 +23,7 @@ services:
       DEFAULT_VECTORIZER_MODULE: 'text2vec-google'
       ENABLE_MODULES: 'text2vec-google'
       CLUSTER_HOSTNAME: 'node1'
+      GOOGLE_APIKEY: ${GEMINI_API_KEY}
 
   backend:
     build: .
