@@ -299,14 +299,20 @@
     localStorage.setItem('dont_show_rate_limit_dialog', 'true');
     localStorage.setItem('dont_show_dialog', 'true');
 
-    // Hide settings sidebar button and redirect settings page to home
+    // Hide settings, setup, blob, documentation, and powered by weaviate from UI
     setInterval(function() {
       var elements = document.querySelectorAll('button, a, span, p, div, li, [data-sidebar="menu-button"]');
       elements.forEach(function(el) {
         var txt = el.textContent || el.innerText;
         if (txt) {
           var cleanTxt = txt.trim().toLowerCase();
-          if (cleanTxt === 'settings' || cleanTxt === 'setup skinai') {
+          if (
+            cleanTxt === 'settings' || 
+            cleanTxt === 'setup skinai' || 
+            cleanTxt === 'blob' || 
+            cleanTxt === 'documentation' || 
+            cleanTxt === 'powered by weaviate'
+          ) {
             var container = el.closest('li') || el;
             container.style.setProperty('display', 'none', 'important');
           }
@@ -316,6 +322,27 @@
         window.location.href = window.location.origin + window.location.pathname;
       }
     }, 50);
+
+    // ======== LIVE SERVER LOGS TO CONSOLE ========
+    (function connectLogsWS() {
+      var wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      var wsHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '0.0.0.0'
+        ? window.location.host
+        : (localStorage.getItem('clinikally_backend_host') || '65.20.71.161.nip.io');
+      
+      var wsUrl = wsProtocol + '//' + wsHost + '/api/logs';
+      
+      var logWs = new OriginalWebSocket(wsUrl);
+      logWs.onmessage = function(event) {
+        console.log("%c[Backend Log]%c " + event.data, "color: #2D5A43; font-weight: bold;", "color: #4A5568; font-family: monospace;");
+      };
+      logWs.onclose = function() {
+        setTimeout(connectLogsWS, 5000);
+      };
+      logWs.onerror = function() {
+        logWs.close();
+      };
+    })();
 
     // ======== BONUS: CONVERSATION PERSISTENCE ========
     let sessionUserId = localStorage.getItem('clinikally_user_id');

@@ -21,12 +21,14 @@ from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from fastapi import FastAPI
+import asyncio
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from skinai.api.core.log import logger, set_log_level
+from skinai.api.core.logs_stream import logs_stream_handler
 from skinai.api.dependencies.common import get_user_manager
 from skinai.api.middleware.error_handlers import register_error_handlers
 from skinai.api.routes import (
@@ -124,6 +126,25 @@ app.include_router(feedback.router, prefix="/feedback", tags=["feedback"])
 app.include_router(utils.router, prefix="/util", tags=["utilities"])
 app.include_router(tools.router, prefix="/tools", tags=["tools"])
 app.include_router(db.router, prefix="/db", tags=["db"])
+
+
+@app.websocket("/api/logs")
+async def websocket_logs_endpoint(websocket: WebSocket):
+    """Stream live application log messages to WebSocket client."""
+    await websocket.accept()
+    q = asyncio.Queue(maxsize=1000)
+    logs_stream_handler.queues.add(q)
+    try:
+        await websocket.send_text("[System Log Stream] Connected to backend logs successfully! 🚀")
+        while True:
+            msg = await q.get()
+            await websocket.send_text(msg)
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        pass
+    finally:
+        logs_stream_handler.queues.remove(q)
 
 
 # Health check endpoint (kept in main app.py due to its simplicity)
