@@ -12,6 +12,9 @@
   <img src="https://img.shields.io/badge/Deployment-Caddy_%26_Docker-00ADD8?style=flat-square&logo=docker&logoColor=white" />
 </p>
 
+> [!IMPORTANT]
+> **API Rate Limit & Exhaustion Notice**: This live demonstration uses free-tier API quotas. If the live assistant does not respond or encounters provider errors (such as 429 Rate Limits), it is purely due to API key exhaustion. Please refer to the **[Loom Demo Walkthrough](#-loom-demo-walkthrough)** for a full, uninterrupted demonstration of the agentic routing, RAG query responses, and vision skin diagnostics.
+
 ---
 
 ## 📑 Table of Contents
