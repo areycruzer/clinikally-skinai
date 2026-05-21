@@ -32,12 +32,19 @@ MANIFEST
 *.manifest
 *.spec
 
-# Ignore all dotfiles except .gitignore and workflows
+# Ignore all dotfiles except .gitignore
 .*
 !.gitignore
-!.github/
-!.github/workflows/
-!.github/workflows/**
+
+# Open-source / community files (not applicable)
+CONTRIBUTING.md
+API.md
+SCALABILITY.md
+MANIFEST.in
+LICENSE
+mkdocs.yml
+docs/
+.github/
 
 # Installer logs
 pip-log.txt

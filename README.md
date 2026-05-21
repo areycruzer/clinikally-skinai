@@ -1,6 +1,6 @@
 <p align="center">
   <h1 align="center">🧴 Clinikally SkinAI — Agentic Skincare Assistant</h1>
-  <p align="center"><i>An intelligent, premium, full-stack AI skincare assistant powered by an adaptive decision-tree agent, multi-source RAG, real-time WebSocket streaming, and multimodal vision diagnostics.</i></p>
+  <p align="center"><i>An intelligent, full-stack AI skincare assistant powered by an adaptive decision-tree agent, multi-source RAG, real-time WebSocket streaming, and multimodal vision diagnostics.</i></p>
 </p>
 
 <p align="center">
@@ -21,6 +21,7 @@
 
 - [🌐 Live Deployment](#-live-deployment)
 - [✨ Architecture & Design Decisions](#-architecture--design-decisions)
+- [🔀 Query Lifecycle — Sequence Diagram](#-query-lifecycle--sequence-diagram)
 - [📦 Features & Requirements Met](#-features--requirements-met)
 - [🛠 Tech Stack](#-tech-stack)
 - [🚀 Quick Start & Local Setup](#-quick-start--local-setup)
@@ -48,44 +49,45 @@ Clinikally SkinAI implements an **adaptive decision-tree agent** rather than a f
 
 ### System Topology
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Chat Interface (Next.js SPA)                │
-│  ┌──────────┐ ┌──────────────┐ ┌──────────┐ ┌───────────────┐  │
-│  │ Streaming │ │ Product Cards│ │ Feedback │ │ Image Upload  │  │
-│  │ Markdown  │ │ ₹ Prices     │ │ 👍 👎    │ │ Drag & Drop   │  │
-│  │  Engine   │ │  & Badges    │ │ Storage  │ │ Multimodal UI │  │
-│  └──────────┘ └──────────────┘ └──────────┘ └───────────────┘  │
-└───────────────────────┬─────────────────────────────────────────┘
-                        │ WebSocket (wss://65.20.71.161.nip.io/ws/query)
-┌───────────────────────▼─────────────────────────────────────────┐
-│                   FastAPI Backend (Uvicorn)                      │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │              Decision Tree Agent (DSPy)                   │   │
-│  │  ┌─────────────┐ ┌────────────┐ ┌────────────────────┐  │   │
-│  │  │ Preprocessor │ │  Router    │ │  Postprocessor     │  │   │
-│  │  │ (Intent +   │ │  (Chain of │ │  (Response Format  │  │   │
-│  │  │  NER)       │ │   Thought) │ │   + Citations)     │  │   │
-│  │  └─────────────┘ └─────┬──────┘ └────────────────────┘  │   │
-│  │                        │                                  │   │
-│  │  ┌─────────────────────▼──────────────────────────────┐  │   │
-│  │  │              Specialist Tools                       │  │   │
-│  │  │  ┌─────────────┐ ┌──────────┐ ┌────────────────┐  │  │   │
-│  │  │  │ ProductQuery│ │ BlogRAG  │ │ GeneralKnowledge│  │  │   │
-│  │  │  │    Tool     │ │  Tool    │ │     Tool        │  │  │   │
-│  │  │  └──────┬──────┘ └────┬─────┘ └───────┬────────┘  │  │   │
-│  │  │         │             │               │            │  │   │
-│  │  │  ┌──────▼──────┐ ┌────▼─────┐  ┌──────▼────────┐  │  │   │
-│  │  │  │ Weaviate    │ │ Weaviate │  │ Gemini 2.5    │  │  │   │
-│  │  │  │ Products    │ │  Blogs   │  │ Flash (LLM)   │  │  │   │
-│  │  │  └─────────────┘ └──────────┘  └───────────────┘  │  │   │
-│  │  │                                                    │  │   │
-│  │  │  ┌─────────────────────────────────────────────┐   │  │   │
-│  │  │  │ SkinAnalysisTool (Gemini Vision + Fallback) │   │  │   │
-│  │  │  └─────────────────────────────────────────────┘   │  │   │
-│  │  └────────────────────────────────────────────────────┘  │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph UI["Chat Interface (Next.js SPA)"]
+        SM["Streaming Markdown Engine"]
+        PC["Product Cards<br/>₹ Prices & Badges"]
+        FB["Feedback Storage<br/>👍 👎"]
+        IU["Image Upload<br/>Drag & Drop Multimodal UI"]
+    end
+
+    UI -->|"WebSocket (wss://)"| BE
+
+    subgraph BE["FastAPI Backend (Uvicorn)"]
+        subgraph Agent["Decision Tree Agent (DSPy)"]
+            PP["Preprocessor<br/>(Intent + NER)"]
+            RT["Router<br/>(Chain of Thought)"]
+            PO["Postprocessor<br/>(Response Format + Citations)"]
+            PP --> RT --> PO
+        end
+
+        subgraph Tools["Specialist Tools"]
+            PQ["ProductQuery Tool"]
+            BR["BlogRAG Tool"]
+            GK["GeneralKnowledge Tool"]
+            SA["SkinAnalysis Tool<br/>(Gemini Vision + Fallback)"]
+        end
+
+        RT --> Tools
+    end
+
+    subgraph Data["Data Layer"]
+        WP[("Weaviate<br/>Products Collection")]
+        WB[("Weaviate<br/>Blogs Collection")]
+        LLM["Gemini 2.5 Flash<br/>(LLM)"]
+    end
+
+    PQ --> WP
+    BR --> WB
+    GK --> LLM
+    SA --> LLM
 ```
 
 ### 🧠 Strategic Technical Choices
@@ -97,6 +99,62 @@ Clinikally SkinAI implements an **adaptive decision-tree agent** rather than a f
 | **Self-Hosted Weaviate Hybrid Search** | Blends high-fidelity dense embeddings (`snowflake-arctic-embed-l-v2.0` via `text2vec-weaviate`) with sparse keyword matching (BM25). This ensures exact name queries (e.g., "Nivea") and conceptual questions (e.g., "dry skin flakes") return mathematically optimal results. |
 | **Vision Diagnostics Trigger** | Multimodal skin photo analysis bypasses intent classification and is **force-routed** directly to Gemini Vision, maintaining zero response latency and robust handling of raw image payloads. |
 | **Stateless Client Session Storage** | Conversation trees, states, and history logs are serialized and synced back-and-forth between a lightweight `localStorage` cache in the frontend and Weaviate persistent memory, keeping backend containers fully stateless and ready to scale. |
+
+---
+
+## 🔀 Query Lifecycle — Sequence Diagram
+
+The following diagram shows the full lifecycle of a user query as it flows through the system:
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant UI as Chat Interface
+    participant WS as WebSocket Layer
+    participant Agent as Decision Tree Agent
+    participant NER as Preprocessor (NER)
+    participant Router as CoT Router
+    participant PQ as ProductQuery Tool
+    participant BR as BlogRAG Tool
+    participant GK as GeneralKnowledge Tool
+    participant SA as SkinAnalysis Tool
+    participant Weaviate as Weaviate DB
+    participant LLM as Gemini 2.5 Flash
+
+    User->>UI: Types query / uploads image
+    UI->>WS: Send JSON frame via wss://
+    WS->>Agent: Dispatch to decision tree
+
+    Agent->>NER: Extract intent, entities, budget, skin type
+    NER-->>Router: Structured intent payload
+
+    alt Product Query
+        Router->>PQ: Route to product search
+        PQ->>Weaviate: Hybrid search (BM25 + vector)
+        Weaviate-->>PQ: Matching products
+        PQ-->>Agent: Product results + metadata
+    else Blog / Article Query
+        Router->>BR: Route to blog RAG
+        BR->>Weaviate: Semantic search over blogs
+        Weaviate-->>BR: Relevant blog snippets
+        BR-->>Agent: Blog context + citations
+    else General Skincare
+        Router->>GK: Route to general knowledge
+        GK->>LLM: Generate expert response
+        LLM-->>GK: Skincare advice
+        GK-->>Agent: LLM response
+    else Image Upload
+        Router->>SA: Force-route to vision
+        SA->>LLM: Gemini Vision analysis (5-model fallback)
+        LLM-->>SA: Diagnostic assessment
+        SA-->>Agent: Skin analysis result
+    end
+
+    Agent->>Agent: Postprocess (format + citations)
+    Agent-->>WS: Stream response tokens
+    WS-->>UI: Real-time token delivery
+    UI-->>User: Rendered markdown + product cards
+```
 
 ---
 
