@@ -13,7 +13,7 @@
 </p>
 
 > [!IMPORTANT]
-> **API Rate Limit & Exhaustion Notice**: This live demonstration uses free-tier API quotas. If the live assistant does not respond or encounters provider errors (such as 429 Rate Limits), it is purely due to API key exhaustion. Please refer to the **[Loom Demo Walkthrough](#-loom-demo-walkthrough)** for a full, uninterrupted demonstration of the agentic routing, RAG query responses, and vision skin diagnostics.
+> **API Rate Limit & Exhaustion Notice**: This live demonstration uses free-tier API quotas. If the live assistant does not respond or encounters provider errors (such as 429 Rate Limits), it is purely due to API key exhaustion. Please refer to the **[YouTube Demo Walkthrough](#-youtube-demo-walkthrough)** for a full, uninterrupted demonstration of the agentic routing, RAG query responses, and vision skin diagnostics.
 
 ---
 
@@ -28,7 +28,7 @@
 - [📡 API & WebSocket Reference](#-api--websocket-reference)
 - [🏆 Bonus Features Implemented](#-bonus-features-implemented)
 - [📈 Scalability Design](#-scalability-design)
-- [🎥 Loom Demo Walkthrough](#-loom-demo-walkthrough)
+- [🎥 YouTube Demo Walkthrough](#-youtube-demo-walkthrough)
 
 ---
 
@@ -94,7 +94,7 @@ Clinikally SkinAI implements an **adaptive decision-tree agent** rather than a f
 | :--- | :--- |
 | **DSPy vs LangChain/Prompt Templates** | Standard prompts break easily with minor model updates. **DSPy compiles natural language code** into structured signatures, applying rigorous validation and optimizing assertions for consistent, error-free JSON/Markdown schemas. |
 | **Adaptive Multi-Source Routing** | Rather than querying all sources concurrently (expensive and slow) or relying on basic regex classifiers (brittle), a **Chain-of-Thought (CoT)** decision-tree identifies user intent, parses specific criteria (e.g., maximum budget, active ingredient focus), and schedules RAG pipelines. |
-| **Self-Hosted Weaviate Hybrid Search** | Blends high-fidelity dense embeddings (`gemini-embedding-2`) with sparse keyword matching (BM25). This ensures exact name queries (e.g., "Nivea") and conceptual questions (e.g., "dry skin flakes") return mathematically optimal results. |
+| **Self-Hosted Weaviate Hybrid Search** | Blends high-fidelity dense embeddings (`snowflake-arctic-embed-l-v2.0` via `text2vec-weaviate`) with sparse keyword matching (BM25). This ensures exact name queries (e.g., "Nivea") and conceptual questions (e.g., "dry skin flakes") return mathematically optimal results. |
 | **Vision Diagnostics Trigger** | Multimodal skin photo analysis bypasses intent classification and is **force-routed** directly to Gemini Vision, maintaining zero response latency and robust handling of raw image payloads. |
 | **Stateless Client Session Storage** | Conversation trees, states, and history logs are serialized and synced back-and-forth between a lightweight `localStorage` cache in the frontend and Weaviate persistent memory, keeping backend containers fully stateless and ready to scale. |
 
@@ -125,7 +125,7 @@ Clinikally SkinAI implements an **adaptive decision-tree agent** rather than a f
 *   **Large Language Model**: Google Gemini 2.5 Flash
 *   **Structured Framework**: DSPy (Declarative Self-Improving Language Programs)
 *   **Vector DB Engine**: Weaviate v1.29.0
-*   **Embedding Model**: Google `gemini-embedding-2` (via Weaviate text2vec-google integration)
+*   **Embedding Model**: Snowflake `snowflake-arctic-embed-l-v2.0` (via Weaviate text2vec-weaviate integration)
 *   **Server Framework**: FastAPI + Uvicorn
 *   **UI SPA Stack**: Next.js (Optimized Static Bundle)
 *   **Edge Router / Proxy**: Caddy 2 (Alpine Edition)
@@ -271,11 +271,11 @@ Used for establishing interactive, low-latency, real-time message streaming.
 
 ---
 
-## 🎥 Loom Demo Walkthrough
+## 🎥 YouTube Demo Walkthrough
 
 A complete, 5-minute architectural walkthrough and live product demonstration is available here:
 
-👉 **[Watch the Live Screen Walkthrough on Loom](https://www.loom.com/share/example-placeholder-link)**
+👉 **[Watch the Live Screen Walkthrough on YouTube](https://youtu.be/EaOpcie9nKY)**
 
 **Demonstrated scenarios**:
 1.  **Product Query**: Price filtration under `₹1200`, showing responsive pricing badges.
