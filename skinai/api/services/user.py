@@ -210,6 +210,7 @@ class UserManager:
     async def get_tree(self, user_id: str, conversation_id: str):
         """
         Get a tree for a user.
+        Will check Weaviate and load the tree if it is not active locally.
         Will raise a ValueError if the user is not found, or the tree is not found.
 
         Args:
@@ -220,7 +221,16 @@ class UserManager:
             (Tree): The tree.
         """
         local_user = await self.get_user_local(user_id)
-        return local_user["tree_manager"].get_tree(conversation_id)
+        tree_manager = local_user["tree_manager"]
+        client_manager = local_user["client_manager"]
+
+        if not tree_manager.tree_exists(conversation_id):
+            if await tree_manager.check_tree_exists_weaviate(conversation_id, client_manager):
+                await tree_manager.load_tree_weaviate(conversation_id, client_manager)
+            else:
+                raise ValueError(f"Tree for conversation '{conversation_id}' not found locally or in Weaviate.")
+
+        return tree_manager.get_tree(conversation_id)
 
     async def check_all_trees_timeout(self):
         """

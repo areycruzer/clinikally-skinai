@@ -166,16 +166,7 @@ async def create_feedback_collection(client):
             # dump training_updates as string
             wc.Property(name="training_updates", data_type=wc.DataType.TEXT),
         ],
-        vectorizer_config=[
-            wc.Configure.NamedVectors.text2vec_openai(
-                name="user_prompt",
-                model="text-embedding-3-small",
-                source_properties=["user_prompt"],
-                vector_index_config=wc.Configure.VectorIndex.hnsw(
-                    quantizer=wc.Configure.VectorIndex.Quantizer.sq(),
-                ),
-            ),
-        ],
+        vectorizer_config=wc.Configure.Vectorizer.none(),
     )
     logger.info("Feedback collection (ELYSIA_FEEDBACK__) created!")
 
@@ -193,7 +184,18 @@ async def create_feedback(
             query_id = list(tree.history.keys())[-1]
             history = tree.history[query_id]
         else:
-            raise KeyError(f"Query ID '{query_id}' not found and tree history is empty.")
+            # Fallback for when history is empty or not populated (e.g. loaded from old DB)
+            history = {
+                "num_trees_completed": tree.tree_data.num_trees_completed,
+                "tree_data": tree.tree_data,
+                "action_information": getattr(tree, "action_information", []),
+                "decision_history": [item for sublist in tree.decision_history for item in sublist] if hasattr(tree, "decision_history") and tree.decision_history else [],
+                "base_lm_used": tree.settings.BASE_MODEL if tree.settings else None,
+                "complex_lm_used": tree.settings.COMPLEX_MODEL if tree.settings else None,
+                "time_taken_seconds": 0.0,
+                "training_updates": [update.to_json() for update in tree.training_updates] if hasattr(tree, "training_updates") and tree.training_updates else [],
+                "initialisation": f"{tree.branch_initialisation}",
+            }
     else:
         history = tree.history[query_id]
 

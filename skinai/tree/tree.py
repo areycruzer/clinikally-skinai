@@ -1994,6 +1994,20 @@ class Tree:
             (dict): The JSON object.
         """
         try:
+            history_json = {}
+            for q_id, hist_item in self.history.items():
+                history_json[q_id] = {
+                    "num_trees_completed": hist_item.get("num_trees_completed", 0),
+                    "tree_data": hist_item["tree_data"].to_json(remove_unserialisable=True),
+                    "action_information": hist_item.get("action_information", []),
+                    "decision_history": hist_item.get("decision_history", []),
+                    "base_lm_used": hist_item.get("base_lm_used"),
+                    "complex_lm_used": hist_item.get("complex_lm_used"),
+                    "time_taken_seconds": hist_item.get("time_taken_seconds", 0.0),
+                    "training_updates": hist_item.get("training_updates", []),
+                    "initialisation": hist_item.get("initialisation", ""),
+                }
+
             return {
                 "user_id": self.user_id,
                 "conversation_id": self.conversation_id,
@@ -2007,6 +2021,7 @@ class Tree:
                 "settings": self.settings.to_json(),
                 "tool_names": list(self.tools.keys()),
                 "frontend_rebuild": self.returner.store,
+                "history": history_json,
             }
         except Exception as e:
             self.settings.logger.error(f"Error exporting tree to JSON: {str(e)}")
@@ -2122,6 +2137,21 @@ class Tree:
         tree.returner.store = json_data["frontend_rebuild"]
         tree.tree_data = TreeData.from_json(json_data["tree_data"])
         tree.set_branch_initialisation(json_data["branch_initialisation"])
+
+        # restore tree history
+        tree.history = {}
+        for q_id, hist_data in json_data.get("history", {}).items():
+            tree.history[q_id] = {
+                "num_trees_completed": hist_data["num_trees_completed"],
+                "tree_data": TreeData.from_json(hist_data["tree_data"]),
+                "action_information": hist_data["action_information"],
+                "decision_history": hist_data["decision_history"],
+                "base_lm_used": hist_data.get("base_lm_used"),
+                "complex_lm_used": hist_data.get("complex_lm_used"),
+                "time_taken_seconds": hist_data["time_taken_seconds"],
+                "training_updates": hist_data["training_updates"],
+                "initialisation": hist_data["initialisation"],
+            }
 
         # check tools
         for tool_name in json_data["tool_names"]:
