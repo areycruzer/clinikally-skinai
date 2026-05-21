@@ -288,6 +288,13 @@
   .fade-in svg {
     color: hsl(var(--accent)) !important;
   }
+
+  /* Ensure configuration and inner content wrappers are never cropped like an iframe */
+  main, main > div, main div.overflow-hidden, .flex-1.min-w-0 {
+    height: 100% !important;
+    max-height: none !important;
+    min-height: 100% !important;
+  }
 </style>
 
 <script>
@@ -318,14 +325,6 @@
           }
         }
       });
-      if (
-        window.location.search.indexOf('page=settings') !== -1 || 
-        window.location.hash.indexOf('settings') !== -1 || 
-        document.body.innerText.includes('Chat Configuration') || 
-        document.body.innerText.includes('Agent Configuration')
-      ) {
-        window.location.href = window.location.origin + window.location.pathname;
-      }
     }, 50);
 
     const OriginalWebSocket = window.WebSocket;
