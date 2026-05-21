@@ -299,6 +299,24 @@
     localStorage.setItem('dont_show_rate_limit_dialog', 'true');
     localStorage.setItem('dont_show_dialog', 'true');
 
+    // Hide settings sidebar button and redirect settings page to home
+    setInterval(function() {
+      var elements = document.querySelectorAll('button, a, span, p, div, li, [data-sidebar="menu-button"]');
+      elements.forEach(function(el) {
+        var txt = el.textContent || el.innerText;
+        if (txt) {
+          var cleanTxt = txt.trim().toLowerCase();
+          if (cleanTxt === 'settings' || cleanTxt === 'setup skinai') {
+            var container = el.closest('li') || el;
+            container.style.setProperty('display', 'none', 'important');
+          }
+        }
+      });
+      if (window.location.search.indexOf('page=settings') !== -1) {
+        window.location.href = window.location.origin + window.location.pathname;
+      }
+    }, 50);
+
     // ======== BONUS: CONVERSATION PERSISTENCE ========
     let sessionUserId = localStorage.getItem('clinikally_user_id');
     let sessionConvId = localStorage.getItem('clinikally_conv_id');
