@@ -318,7 +318,12 @@
           }
         }
       });
-      if (window.location.search.indexOf('page=settings') !== -1) {
+      if (
+        window.location.search.indexOf('page=settings') !== -1 || 
+        window.location.hash.indexOf('settings') !== -1 || 
+        document.body.innerText.includes('Chat Configuration') || 
+        document.body.innerText.includes('Agent Configuration')
+      ) {
         window.location.href = window.location.origin + window.location.pathname;
       }
     }, 50);
@@ -1331,9 +1336,12 @@
             chatMutationObserver = new MutationObserver((mutations) => {
               processMessages(activeChatContainer);
               
-              // Only scroll to bottom on actual child list additions
-              const hasAddedNodes = mutations.some(m => m.addedNodes.length > 0);
-              if (hasAddedNodes) {
+              // Only scroll to bottom on actual direct child element additions (new message bubbles)
+              const hasAddedDirectChildren = mutations.some(m => 
+                m.target === activeChatContainer && 
+                Array.from(m.addedNodes).some(node => node.nodeType === 1)
+              );
+              if (hasAddedDirectChildren) {
                 activeChatContainer.scrollTop = activeChatContainer.scrollHeight;
               }
             });
