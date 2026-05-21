@@ -323,6 +323,8 @@
       }
     }, 50);
 
+    const OriginalWebSocket = window.WebSocket;
+
     // ======== LIVE SERVER LOGS TO CONSOLE ========
     (function connectLogsWS() {
       var wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -359,7 +361,6 @@
     window.sessionConvId = sessionConvId;
     window.lastQueryId = "";
 
-    const OriginalWebSocket = window.WebSocket;
     // Reverse-lookup maps: intercepted backend IDs → original React-generated IDs
     // so incoming WebSocket messages can be rewritten back for React state matching.
     const _convIdMap = {};   // backend conversation_id → React conversation_id
